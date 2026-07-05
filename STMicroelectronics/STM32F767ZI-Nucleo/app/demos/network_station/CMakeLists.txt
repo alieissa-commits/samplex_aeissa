@@ -36,6 +36,8 @@ target_link_libraries(${PROJECT_NAME}
         board_bsp
         threadx
         filex
+        netxduo
+        netx_stm32_driver
         stm32cubef7
 )
 
