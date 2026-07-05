@@ -390,10 +390,19 @@ static void logger_thread_entry(ULONG thread_input)
                 }
             }
 
-            /* Forward the sensor reading to the network telemetry queue */
+            /* Forward the sensor reading to the network telemetry queue (Evict Oldest policy) */
             if (tx_queue_send(&network_queue, &msg, TX_NO_WAIT) != TX_SUCCESS)
             {
-                printf("[Logger Thread] WARNING: Network queue is full, telemetry message dropped.\r\n");
+                sensor_msg_t discarded_msg;
+                /* Evict the oldest item at the front of the queue to make room */
+                if (tx_queue_receive(&network_queue, &discarded_msg, TX_NO_WAIT) == TX_SUCCESS)
+                {
+                    printf("[Logger Thread] WARNING: Network queue full. Evicting oldest message (Time: %lu ms).\r\n", 
+                           (unsigned long)discarded_msg.timestamp);
+                }
+                
+                /* Try sending the new message again */
+                tx_queue_send(&network_queue, &msg, TX_NO_WAIT);
             }
         }
     }
@@ -535,8 +544,8 @@ static void network_thread_entry(ULONG thread_input)
         }
 
         /* 3. Resolve DNS name of the Mosquitto broker */
-        broker_ip.nxd_ip_version = 4;
-        status = nxd_dns_host_by_name_get(&dns_client, (UCHAR *)MQTT_BROKER_HOST, &broker_ip, 500, 4);
+        broker_ip.nxd_ip_version = NX_IP_VERSION_V4;
+        status = nxd_dns_host_by_name_get(&dns_client, (UCHAR *)MQTT_BROKER_HOST, &broker_ip, 500, NX_IP_VERSION_V4);
         if (status != NX_SUCCESS)
         {
             printf("[DNS] Error: Failed to resolve broker '%s' (0x%02X). Retrying...\r\n", MQTT_BROKER_HOST, status);
