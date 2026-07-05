@@ -11,6 +11,7 @@
 
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Set the toolchain if not defined
 if(NOT CMAKE_TOOLCHAIN_FILE)
@@ -33,7 +34,7 @@ set(STM32Cube_DIR "${CMAKE_CURRENT_LIST_DIR}/lib/stm32cubef7")
 
 # Find CMSIS and HAL driver packages
 find_package(CMSIS REQUIRED)
-find_package(STM32HAL REQUIRED COMPONENTS cortex pwr rcc gpio uart dma eth)
+find_package(STM32HAL REQUIRED COMPONENTS cortex pwr rcc gpio uart dma eth i2c)
 
 # Compile the STM32F7xx HAL Driver Library as an Object Library
 set(HAL_TARGET stm32cubef7)
@@ -74,6 +75,10 @@ endif()
 # Compile ThreadX Kernel from root shared libs submodule
 set(THREADX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../libs/threadx")
 add_subdirectory(${THREADX_DIR} threadx)
+
+# Compile FileX Filesystem from root shared libs submodule
+set(FILEX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../libs/filex")
+add_subdirectory(${FILEX_DIR} filex)
 
 if(USE_NETXDUO)
     # Compile NetX Duo TCP/IP Stack from root shared libs submodule
