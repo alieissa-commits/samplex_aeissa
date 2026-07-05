@@ -33,4 +33,8 @@ typedef enum {
 sensor_status_t sensor_init(void);
 sensor_status_t sensor_read(float *temp, float *hum);
 
+/* Mock Sensor API (used internally by sensor_driver when physical sensor is missing) */
+sensor_status_t mock_sensor_init(void);
+sensor_status_t mock_sensor_read(float *temp, float *hum);
+
 #endif /* SENSOR_H */

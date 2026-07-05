@@ -89,7 +89,7 @@ sensor_status_t sensor_init(void)
     {
         printf("[Sensor] WARNING: Physical HTS221 not detected on I2C1 (no ack). Switching to MOCK mode.\r\n");
         mock_mode_active = 1;
-        return SENSOR_OK;
+        return mock_sensor_init();
     }
 
     /* Read WHO_AM_I register */
@@ -98,7 +98,7 @@ sensor_status_t sensor_init(void)
     {
         printf("[Sensor] WARNING: WHO_AM_I failed (got 0x%02X, expected 0x%02X). Switching to MOCK mode.\r\n", whoamI, HTS221_ID);
         mock_mode_active = 1;
-        return SENSOR_OK;
+        return mock_sensor_init();
     }
 
     printf("[Sensor] Physical HTS221 detected (WHO_AM_I = 0x%02X).\r\n", whoamI);
@@ -134,27 +134,7 @@ sensor_status_t sensor_read(float *temp, float *hum)
 {
     if (mock_mode_active)
     {
-        /* Generate simulated values using a slow sine wave + small noise */
-        uint32_t tick = HAL_GetTick();
-        
-        /* Simulated temperature: 22.0°C base + 3.0°C variation */
-        float sim_temp = 22.0f + 3.0f * sinf((float)tick / 10000.0f);
-        
-        /* Simulated humidity: 55.0% base + 10.0% variation */
-        float sim_hum = 55.0f + 10.0f * cosf((float)tick / 15000.0f);
-
-        /* Add a tiny bit of noise (pseudo-random based on tick) */
-        float noise = (float)(tick % 100) / 500.0f - 0.1f; // -0.1 to +0.1
-        sim_temp += noise;
-        sim_hum += noise * 5.0f; // humidity noise is larger
-
-        /* Keep humidity within physical limits */
-        if (sim_hum < 0.0f) sim_hum = 0.0f;
-        if (sim_hum > 100.0f) sim_hum = 100.0f;
-
-        *temp = sim_temp;
-        *hum = sim_hum;
-        return SENSOR_OK;
+        return mock_sensor_read(temp, hum);
     }
 
     /* Physical sensor read */

@@ -12,6 +12,7 @@
 add_executable(${PROJECT_NAME}
     main.c
     sensor_driver.c
+    mock_sensor.c
     hts221_reg.c
 )
 
