@@ -22,6 +22,7 @@
 #include "mqtt_config.h"
 #include <stdio.h>
 #include <string.h>
+#include "ansi_colors.h"
 
 #define DEMO_STACK_SIZE         2048
 #define DEMO_BYTE_POOL_SIZE     65536  /* Increased byte pool size to accommodate NetX Duo and ThreadX stacks */
@@ -89,9 +90,9 @@ int main(void)
     /* Initialize Board Support Package (BSP) - clock, GPIO, UART, I2C, etc. */
     board_init();
 
-    printf("\r\n==================================================\r\n");
-    printf("  Network Environmental Station Demo - Phase 3   \r\n");
-    printf("==================================================\r\n");
+    printf(ANSI_BOLD ANSI_CYAN "\r\n==================================================\r\n" ANSI_RESET);
+    printf(ANSI_BOLD ANSI_CYAN "  Network Environmental Station Demo - Phase 3   \r\n" ANSI_RESET);
+    printf(ANSI_BOLD ANSI_CYAN "==================================================\r\n" ANSI_RESET);
 
     /* Initialize the Ethernet hardware, MAC, and wait for link to be established */
     board_ethernet_init();
@@ -195,7 +196,7 @@ void tx_application_define(void *first_unused_memory)
     /* Create the packet pool in our uncacheable section */
     if (nx_packet_pool_create(&pool_0, "NetX Main Packet Pool",
                               PACKET_SIZE, packet_pool_area, PACKET_POOL_SIZE) != NX_SUCCESS) {
-        printf("[NetX] Failed to create packet pool.\r\n");
+        printf(ANSI_BLUE "[NetX] " ANSI_RED "Failed to create packet pool.\r\n" ANSI_RESET);
         Error_Handler();
     }
 
@@ -209,7 +210,7 @@ void tx_application_define(void *first_unused_memory)
     if (nx_ip_create(&ip_0, "NetX IP Instance 0", IP_ADDRESS(0, 0, 0, 0),
                      0xFFFFFF00UL, &pool_0, nx_stm32_eth_driver,
                      pointer, DEMO_STACK_SIZE, 1) != NX_SUCCESS) {
-        printf("[NetX] Failed to create IP instance.\r\n");
+        printf(ANSI_BLUE "[NetX] " ANSI_RED "Failed to create IP instance.\r\n" ANSI_RESET);
         Error_Handler();
     }
 
@@ -232,7 +233,7 @@ void tx_application_define(void *first_unused_memory)
         Error_Handler();
     }
 
-    printf("[System] ThreadX, FileX, and NetX objects initialized successfully.\r\n");
+    printf(ANSI_BOLD ANSI_WHITE "[System] " ANSI_GREEN "ThreadX, FileX, and NetX objects initialized successfully.\r\n" ANSI_RESET);
 }
 
 static void sensor_thread_entry(ULONG thread_input)
@@ -245,11 +246,11 @@ static void sensor_thread_entry(ULONG thread_input)
     /* Initialize sensor hardware (or fallback to mock) */
     if (sensor_init() != SENSOR_OK)
     {
-        printf("[Sensor Thread] Critical Error: Sensor initialization failed!\r\n");
+        printf(ANSI_CYAN "[Sensor Thread] " ANSI_RED "Critical Error: Sensor initialization failed!\r\n" ANSI_RESET);
         Error_Handler();
     }
 
-    printf("[Sensor Thread] Started polling loop (every 2 seconds).\r\n");
+    printf(ANSI_CYAN "[Sensor Thread] " ANSI_WHITE "Started polling loop (every 2 seconds).\r\n" ANSI_RESET);
 
     while (1)
     {
@@ -271,17 +272,17 @@ static void sensor_thread_entry(ULONG thread_input)
                 int hum_dec = (int)hum;
                 int hum_frac = (int)((hum - (float)hum_dec) * 100.0f);
 
-                printf("[Sensor Thread] Temp: %s%d.%02d C, Hum: %d.%02d %%, Time: %lu ms (Sent to Queue)\r\n", 
+                printf(ANSI_CYAN "[Sensor Thread] " ANSI_WHITE "Temp: %s%d.%02d C, Hum: %d.%02d %%, Time: %lu ms (Sent to Queue)\r\n" ANSI_RESET, 
                        (temp < 0.0f) ? "-" : "", temp_dec, temp_frac, hum_dec, hum_frac, (unsigned long)msg.timestamp);
             }
             else
             {
-                printf("[Sensor Thread] WARNING: Queue is full, message dropped.\r\n");
+                printf(ANSI_CYAN "[Sensor Thread] " ANSI_YELLOW "WARNING: Queue is full, message dropped.\r\n" ANSI_RESET);
             }
         }
         else
         {
-            printf("[Sensor Thread] Error: Failed to read sensor data.\r\n");
+            printf(ANSI_CYAN "[Sensor Thread] " ANSI_RED "Error: Failed to read sensor data.\r\n" ANSI_RESET);
         }
 
         /* Sleep for 2 seconds (assuming 100 ticks per second) */
@@ -296,7 +297,7 @@ static void logger_thread_entry(ULONG thread_input)
     sensor_msg_t msg;
     char write_buffer[64];
 
-    printf("[Logger Thread] Starting FileX RAM Disk Logger...\r\n");
+    printf(ANSI_MAGENTA "[Logger Thread] " ANSI_WHITE "Starting FileX RAM Disk Logger...\r\n" ANSI_RESET);
 
     /* Initialize FileX system */
     fx_system_initialize();
@@ -318,7 +319,7 @@ static void logger_thread_entry(ULONG thread_input)
                              1);
     if (status != FX_SUCCESS)
     {
-        printf("[Logger Thread] Error: RAM Disk format failed! (0x%02X)\r\n", status);
+        printf(ANSI_MAGENTA "[Logger Thread] " ANSI_RED "Error: RAM Disk format failed! (0x%02X)\r\n" ANSI_RESET, status);
         Error_Handler();
     }
 
@@ -327,7 +328,7 @@ static void logger_thread_entry(ULONG thread_input)
                            cache_buffer, sizeof(cache_buffer));
     if (status != FX_SUCCESS)
     {
-        printf("[Logger Thread] Error: RAM Disk open failed! (0x%02X)\r\n", status);
+        printf(ANSI_MAGENTA "[Logger Thread] " ANSI_RED "Error: RAM Disk open failed! (0x%02X)\r\n" ANSI_RESET, status);
         Error_Handler();
     }
 
@@ -335,7 +336,7 @@ static void logger_thread_entry(ULONG thread_input)
     status = fx_file_create(&ram_disk, "sensor_log.txt");
     if (status != FX_SUCCESS && status != FX_ALREADY_CREATED)
     {
-        printf("[Logger Thread] Error: Failed to create log file! (0x%02X)\r\n", status);
+        printf(ANSI_MAGENTA "[Logger Thread] " ANSI_RED "Error: Failed to create log file! (0x%02X)\r\n" ANSI_RESET, status);
         Error_Handler();
     }
 
@@ -343,14 +344,14 @@ static void logger_thread_entry(ULONG thread_input)
     status = fx_file_open(&ram_disk, &log_file, "sensor_log.txt", FX_OPEN_FOR_WRITE);
     if (status != FX_SUCCESS)
     {
-        printf("[Logger Thread] Error: Failed to open log file! (0x%02X)\r\n", status);
+        printf(ANSI_MAGENTA "[Logger Thread] " ANSI_RED "Error: Failed to open log file! (0x%02X)\r\n" ANSI_RESET, status);
         Error_Handler();
     }
 
     /* Move the write pointer to the end of the file to append new data */
     fx_file_seek(&log_file, log_file.fx_file_current_file_size);
 
-    printf("[Logger Thread] RAM Disk initialized. Logging 'sensor_log.txt'...\r\n");
+    printf(ANSI_MAGENTA "[Logger Thread] " ANSI_GREEN "RAM Disk initialized. Logging 'sensor_log.txt'...\r\n" ANSI_RESET);
 
     while (1)
     {
@@ -379,14 +380,14 @@ static void logger_thread_entry(ULONG thread_input)
                     /* Flush the media to commit changes to the RAM Disk immediately */
                     fx_media_flush(&ram_disk);
                     
-                    printf("[Logger Thread] Logged to RAM Disk: %lu,%s%d.%02d,%d.%02d\r\n",
+                    printf(ANSI_MAGENTA "[Logger Thread] " ANSI_WHITE "Logged to RAM Disk: %lu,%s%d.%02d,%d.%02d\r\n" ANSI_RESET,
                            (unsigned long)msg.timestamp,
                            (msg.temperature < 0.0f) ? "-" : "", temp_dec, temp_frac,
                            hum_dec, hum_frac);
                 }
                 else
                 {
-                    printf("[Logger Thread] Error: Failed to write to log file! (0x%02X)\r\n", status);
+                    printf(ANSI_MAGENTA "[Logger Thread] " ANSI_RED "Error: Failed to write to log file! (0x%02X)\r\n" ANSI_RESET, status);
                 }
             }
 
@@ -397,7 +398,7 @@ static void logger_thread_entry(ULONG thread_input)
                 /* Evict the oldest item at the front of the queue to make room */
                 if (tx_queue_receive(&network_queue, &discarded_msg, TX_NO_WAIT) == TX_SUCCESS)
                 {
-                    printf("[Logger Thread] WARNING: Network queue full. Evicting oldest message (Time: %lu ms).\r\n", 
+                    printf(ANSI_MAGENTA "[Logger Thread] " ANSI_YELLOW "WARNING: Network queue full. Evicting oldest message (Time: %lu ms).\r\n" ANSI_RESET, 
                            (unsigned long)discarded_msg.timestamp);
                 }
                 
@@ -420,7 +421,7 @@ static void dhcp_thread_entry(ULONG thread_input)
     /* Create the DHCP client instance once */
     nx_dhcp_create(&dhcp_client, &ip_0, "DHCP Client");
 
-    printf("[NetX] Network Monitor Thread Started.\r\n");
+    printf(ANSI_BLUE "[NetX] " ANSI_WHITE "Network Monitor Thread Started.\r\n" ANSI_RESET);
 
     while (1)
     {
@@ -432,26 +433,26 @@ static void dhcp_thread_entry(ULONG thread_input)
         {
             if (curr_link_up)
             {
-                printf("[NetX] Ethernet cable connected! Enabling link...\r\n");
+                printf(ANSI_BLUE "[NetX] " ANSI_YELLOW "Ethernet cable connected! Enabling link...\r\n" ANSI_RESET);
                 UINT status = nx_ip_driver_direct_command(&ip_0, NX_LINK_ENABLE, &actual_status);
                 if (status == NX_SUCCESS || status == NX_ALREADY_ENABLED)
                 {
-                    printf("[NetX] Ethernet link is UP! Starting DHCP client...\r\n");
+                    printf(ANSI_BLUE "[NetX] " ANSI_GREEN "Ethernet link is UP! Starting DHCP client...\r\n" ANSI_RESET);
                     nx_dhcp_start(&dhcp_client);
 
                     /* Wait up to 10 seconds for IP address resolution */
                     if (nx_ip_status_check(&ip_0, NX_IP_ADDRESS_RESOLVED, &ip_address, 1000) == NX_SUCCESS)
                     {
                         nx_ip_address_get(&ip_0, &ip_address, &network_mask);
-                        printf("[NetX] DHCP Success!\r\n");
-                        printf("[NetX] IP Address : %lu.%lu.%lu.%lu\r\n", 
+                        printf(ANSI_BLUE "[NetX] " ANSI_BOLD ANSI_GREEN "DHCP Success!\r\n" ANSI_RESET);
+                        printf(ANSI_BLUE "[NetX] " ANSI_GREEN "IP Address : %lu.%lu.%lu.%lu\r\n" ANSI_RESET, 
                                (ip_address >> 24) & 0xFF, (ip_address >> 16) & 0xFF, 
                                (ip_address >> 8) & 0xFF, ip_address & 0xFF);
                         ip_resolved = NX_TRUE;
                     }
                     else
                     {
-                        printf("[NetX] DHCP Timeout! Using static IP 192.168.0.100\r\n");
+                        printf(ANSI_BLUE "[NetX] " ANSI_YELLOW "DHCP Timeout! Using static IP 192.168.0.100\r\n" ANSI_RESET);
                         nx_dhcp_stop(&dhcp_client);
                         nx_ip_address_set(&ip_0, IP_ADDRESS(192, 168, 0, 100), 0xFFFFFF00UL);
                         ip_resolved = NX_TRUE;
@@ -459,12 +460,12 @@ static void dhcp_thread_entry(ULONG thread_input)
                 }
                 else
                 {
-                    printf("[NetX] Failed to enable driver link: 0x%02x\r\n", status);
+                    printf(ANSI_BLUE "[NetX] " ANSI_RED "Failed to enable driver link: 0x%02x\r\n" ANSI_RESET, status);
                 }
             }
             else
             {
-                printf("[NetX] Ethernet cable disconnected! Disabling link...\r\n");
+                printf(ANSI_BLUE "[NetX] " ANSI_RED "Ethernet cable disconnected! Disabling link...\r\n" ANSI_RESET);
                 ip_resolved = NX_FALSE;
                 nx_dhcp_stop(&dhcp_client);
                 nx_ip_driver_direct_command(&ip_0, NX_LINK_DISABLE, &actual_status);
@@ -493,7 +494,7 @@ static void network_thread_entry(ULONG thread_input)
     snprintf(client_id, sizeof(client_id), "stm32f767_%08lX", (unsigned long)uid_w0);
     snprintf(mqtt_topic, sizeof(mqtt_topic), "samplex/env_station/%s/telemetry", client_id);
 
-    printf("[Network Thread] Starting Network Telemetry Thread...\r\n");
+    printf(ANSI_BLUE "[Network Thread] " ANSI_WHITE "Starting Network Telemetry Thread...\r\n" ANSI_RESET);
 
     /* Allocate stack for internal MQTT thread from our byte memory pool */
     if (tx_byte_allocate(&byte_pool_sensor, (VOID **) &mqtt_stack, DEMO_STACK_SIZE, TX_NO_WAIT) != TX_SUCCESS)
@@ -506,7 +507,7 @@ static void network_thread_entry(ULONG thread_input)
                                     &ip_0, &pool_0, mqtt_stack, DEMO_STACK_SIZE, 4, NX_NULL, 0);
     if (status != NX_SUCCESS)
     {
-        printf("[MQTT] Error: Failed to create MQTT client (0x%02X)\r\n", status);
+        printf(ANSI_BLUE "[MQTT] " ANSI_RED "Error: Failed to create MQTT client (0x%02X)\r\n" ANSI_RESET, status);
         Error_Handler();
     }
 
@@ -531,13 +532,13 @@ static void network_thread_entry(ULONG thread_input)
             {
                 nx_dns_server_add(&dns_client, dns_server);
                 dns_initialized = NX_TRUE;
-                printf("[DNS] DNS Client initialized. Server: %lu.%lu.%lu.%lu\r\n",
+                printf(ANSI_BLUE "[DNS] " ANSI_GREEN "DNS Client initialized. Server: %lu.%lu.%lu.%lu\r\n" ANSI_RESET,
                        (dns_server >> 24) & 0xFF, (dns_server >> 16) & 0xFF,
                        (dns_server >> 8) & 0xFF, dns_server & 0xFF);
             }
             else
             {
-                printf("[DNS] Error: Failed to create DNS client! Retrying...\r\n");
+                printf(ANSI_BLUE "[DNS] " ANSI_RED "Error: Failed to create DNS client! Retrying...\r\n" ANSI_RESET);
                 tx_thread_sleep(200);
                 continue;
             }
@@ -548,30 +549,30 @@ static void network_thread_entry(ULONG thread_input)
         status = nxd_dns_host_by_name_get(&dns_client, (UCHAR *)MQTT_BROKER_HOST, &broker_ip, 500, NX_IP_VERSION_V4);
         if (status != NX_SUCCESS)
         {
-            printf("[DNS] Error: Failed to resolve broker '%s' (0x%02X). Retrying...\r\n", MQTT_BROKER_HOST, status);
+            printf(ANSI_BLUE "[DNS] " ANSI_RED "Error: Failed to resolve broker '%s' (0x%02X). Retrying...\r\n" ANSI_RESET, MQTT_BROKER_HOST, status);
             tx_thread_sleep(500);
             continue;
         }
 
-        printf("[DNS] Resolved '%s' to %lu.%lu.%lu.%lu\r\n", MQTT_BROKER_HOST,
+        printf(ANSI_BLUE "[DNS] " ANSI_GREEN "Resolved '%s' to %lu.%lu.%lu.%lu\r\n" ANSI_RESET, MQTT_BROKER_HOST,
                (broker_ip.nxd_ip_address.v4 >> 24) & 0xFF,
                (broker_ip.nxd_ip_address.v4 >> 16) & 0xFF,
                (broker_ip.nxd_ip_address.v4 >> 8) & 0xFF,
                broker_ip.nxd_ip_address.v4 & 0xFF);
 
         /* 4. Connect to Mosquitto Broker */
-        printf("[MQTT] Connecting to broker %s:%d...\r\n", MQTT_BROKER_HOST, MQTT_BROKER_PORT);
+        printf(ANSI_BLUE "[MQTT] " ANSI_YELLOW "Connecting to broker %s:%d...\r\n" ANSI_RESET, MQTT_BROKER_HOST, MQTT_BROKER_PORT);
         status = nxd_mqtt_client_connect(&mqtt_client, &broker_ip, MQTT_BROKER_PORT,
                                          60, 1, 1000); /* 60s keepalive, clean session, 10s wait */
         if (status != NX_SUCCESS)
         {
-            printf("[MQTT] Error: Connection failed (0x%02X). Retrying...\r\n", status);
+            printf(ANSI_BLUE "[MQTT] " ANSI_RED "Error: Connection failed (0x%02X). Retrying...\r\n" ANSI_RESET, status);
             tx_thread_sleep(500);
             continue;
         }
 
-        printf("[MQTT] Connected successfully to Mosquitto broker!\r\n");
-        printf("[MQTT] Publishing to topic: %s\r\n", mqtt_topic);
+        printf(ANSI_BLUE "[MQTT] " ANSI_BOLD ANSI_GREEN "Connected successfully to Mosquitto broker!\r\n" ANSI_RESET);
+        printf(ANSI_BLUE "[MQTT] " ANSI_WHITE "Publishing to topic: %s\r\n" ANSI_RESET, mqtt_topic);
         mqtt_connected = NX_TRUE;
 
         /* 5. Publish Telemetry Loop */
@@ -598,11 +599,11 @@ static void network_thread_entry(ULONG thread_input)
                                                  payload, strlen(payload), 0, 0, 500);
                 if (status == NX_SUCCESS)
                 {
-                    printf("[Network Thread] MQTT Published: %s\r\n", payload);
+                    printf(ANSI_BLUE "[Network Thread] " ANSI_GREEN "MQTT Published: %s\r\n" ANSI_RESET, payload);
                 }
                 else
                 {
-                    printf("[Network Thread] Error: Publish failed (0x%02X)\r\n", status);
+                    printf(ANSI_BLUE "[Network Thread] " ANSI_RED "Error: Publish failed (0x%02X)\r\n" ANSI_RESET, status);
                     nxd_mqtt_client_disconnect(&mqtt_client);
                     mqtt_connected = NX_FALSE;
                 }
@@ -618,7 +619,7 @@ static void status_thread_entry(ULONG thread_input)
     (void)thread_input;
     UINT state = 0;
 
-    printf("[Status Thread] Status Monitor Thread Started.\r\n");
+    printf(ANSI_YELLOW "[Status Thread] " ANSI_WHITE "Status Monitor Thread Started.\r\n" ANSI_RESET);
 
     while (1)
     {

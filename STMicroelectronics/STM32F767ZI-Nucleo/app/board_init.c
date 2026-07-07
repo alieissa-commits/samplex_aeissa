@@ -16,6 +16,7 @@
 #include "tx_api.h"
 #include <string.h>
 #include <stdio.h>
+#include "ansi_colors.h"
 
 /* Global UART handler */
 UART_HandleTypeDef huart3;
@@ -264,19 +265,26 @@ void board_ethernet_init(void)
     heth.Init.RxDesc = DMARxDscrTab;
     heth.Init.RxBuffLen = 1524;
 
-    printf("[HAL] Calling HAL_ETH_Init...\r\n");
+    printf(TAG_HAL " " MSG_INFO "Calling HAL_ETH_Init...\r\n" ANSI_RESET);
     HAL_StatusTypeDef status = HAL_ETH_Init(&heth);
-    printf("[HAL] HAL_ETH_Init returned status: %d\r\n", status);
+    if (status == HAL_OK)
+    {
+        printf(TAG_HAL " " MSG_SUCCESS "HAL_ETH_Init succeeded (status: %d)\r\n" ANSI_RESET, status);
+    }
+    else
+    {
+        printf(TAG_HAL " " MSG_ERROR "HAL_ETH_Init failed (status: %d)\r\n" ANSI_RESET, status);
+    }
 
     /* Initialize the PHY transceiver and wait for the link to be established.
        This ensures that when NetX Duo enables the interface during startup,
        the hardware link is already up, avoiding driver initialization failures. */
     extern int32_t nx_eth_phy_init(void);
     extern int32_t nx_eth_phy_get_link_state(void);
-    printf("[NetX] Initializing PHY transceiver...\r\n");
+    printf(TAG_NETWORK " " MSG_INFO "Initializing PHY transceiver...\r\n" ANSI_RESET);
     if (nx_eth_phy_init() == 0)
     {
-        printf("[NetX] Waiting for Ethernet link (max 3s)...\r\n");
+        printf(TAG_NETWORK " " MSG_WARNING "Waiting for Ethernet link (max 3s)...\r\n" ANSI_RESET);
         uint32_t retries = 300; /* 300 * 10ms = 3 seconds */
         while (nx_eth_phy_get_link_state() <= 1)
         {
@@ -284,13 +292,13 @@ void board_ethernet_init(void)
             retries--;
             if (retries == 0)
             {
-                printf("[NetX] Ethernet link timeout! Cable connected?\r\n");
+                printf(TAG_NETWORK " " MSG_ERROR "Ethernet link timeout! Cable connected?\r\n" ANSI_RESET);
                 break;
             }
         }
         if (nx_eth_phy_get_link_state() > 1)
         {
-            printf("[NetX] Ethernet link up!\r\n");
+            printf(TAG_NETWORK " " MSG_SUCCESS "Ethernet link up!\r\n" ANSI_RESET);
         }
     }
     else
